@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubebase-config
+  namespace: kubebase-dev
+  labels:
+    app.kubernetes.io/name: kubebase-platform
+    app.kubernetes.io/component: api
+# Non-secret configuration injected into the app as environment variables.
+# Never put passwords, tokens or other secrets here — those belong in a Secret.
+data:
+  APP_NAME: "KubeBase Platform"
+  APP_ENV: "dev"
+  APP_GREETING: "Hello from KubeBase Platform on Kubernetes!"
+  LOG_LEVEL: "info"

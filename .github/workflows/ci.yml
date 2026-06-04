@@ -1,0 +1,62 @@
+name: CI
+
+# Continuous Integration only — this workflow validates the project.
+# It does NOT build/push images, and it never deploys to a real cluster.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate project
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check Python syntax (py_compile)
+        run: |
+          python -m py_compile app/main.py
+          echo "OK: app/main.py compiles without syntax errors"
+
+      - name: Check required files exist
+        run: |
+          missing=0
+          for f in Dockerfile app/main.py app/requirements.txt \
+                   kubernetes/base/kustomization.yaml; do
+            if [ -f "$f" ]; then
+              echo "OK: $f is present"
+            else
+              echo "MISSING: $f is required but was not found" >&2
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Check Kubernetes manifests are present (YAML)
+        run: |
+          count=$(find kubernetes -type f \( -name '*.yaml' -o -name '*.yml' \) | wc -l)
+          echo "Found $count Kubernetes YAML file(s)."
+          test "$count" -gt 0
+
+      - name: Build manifests with kustomize
+        run: |
+          # kubectl ships with a built-in kustomize on the GitHub runner.
+          if command -v kubectl >/dev/null 2>&1; then
+            kubectl kustomize kubernetes/base >/dev/null
+            echo "OK: kubectl kustomize built the base successfully"
+          elif command -v kustomize >/dev/null 2>&1; then
+            kustomize build kubernetes/base >/dev/null
+            echo "OK: kustomize built the base successfully"
+          else
+            echo "Neither kubectl nor kustomize available — skipping (allowed)."
+          fi

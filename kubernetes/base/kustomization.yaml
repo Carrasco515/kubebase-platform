@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Base resources for the KubeBase Platform demo app.
+# Build/preview the rendered manifests with:
+#   kubectl kustomize kubernetes/base
+# Apply them (only when you choose to) with:
+#   kubectl apply -k kubernetes/base
+
+namespace: kubebase-dev
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+  # secret.example.yaml is intentionally NOT included — it is an example only.
+  # Create a local, git-ignored secret.yaml from it and add it here yourself
+  # if you want the app to consume a Secret.
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: kubebase-platform

@@ -1,0 +1,25 @@
+# --- Secrets (never commit real ones) ---
+# Only secret.example.yaml is tracked; a real secret.yaml stays local.
+secret.yaml
+kubernetes/base/secret.yaml
+*.secret.yaml
+.env
+.env.*
+!.env.example
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+*.swp
