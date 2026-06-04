@@ -1,0 +1,19 @@
+# Dev sizing — merged onto the base Deployment.
+# 2 replicas and moderate resources, comfortable for a local Minikube node.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubebase-api
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: api
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"

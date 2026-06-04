@@ -51,13 +51,17 @@ kubebase-platform/
 │   ├── main.py
 │   └── requirements.txt
 ├── Dockerfile               # Container image for the app
-├── kubernetes/base/         # Kustomize base manifests
-│   ├── namespace.yaml
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   ├── configmap.yaml
-│   ├── secret.example.yaml  # example only — not applied by default
-│   └── kustomization.yaml
+├── kubernetes/
+│   ├── base/                # Kustomize base manifests
+│   │   ├── namespace.yaml
+│   │   ├── deployment.yaml
+│   │   ├── service.yaml
+│   │   ├── configmap.yaml
+│   │   ├── secret.example.yaml  # example only — not applied by default
+│   │   └── kustomization.yaml
+│   └── overlays/            # Per-environment overlays (patches on the base)
+│       ├── dev/             # local Minikube — namespace kubebase-dev
+│       └── prod/            # local learning "prod" — namespace kubebase-prod
 ├── docs/                    # Architecture + operations
 └── .github/workflows/ci.yml # Read-only validation
 ```
@@ -92,10 +96,18 @@ docker build -t kubebase-platform:0.1.0 .
 docker run --rm -p 8000:8000 kubebase-platform:0.1.0
 ```
 
-## Deploy to local Kubernetes (later)
+## Deploy to local Kubernetes
 
 > ⚠️ This applies resources to whatever cluster your `kubectl` context points at.
 > Make sure it's a **local** cluster first (`kubectl config current-context`).
+
+The project uses **Kustomize** with a shared `base` and two overlays:
+
+| Target | Namespace | Replicas | Use |
+|---|---|---|---|
+| `base` | `kubebase-dev` | 2 | The shared manifests (also usable directly) |
+| `overlays/dev` | `kubebase-dev` | 2 | Local development on Minikube |
+| `overlays/prod` | `kubebase-prod` | 3 | A **local learning** "prod" — *not* a real production cluster |
 
 ```bash
 # 1. Make the image available to your local cluster, e.g.:
@@ -104,13 +116,20 @@ minikube image load kubebase-platform:0.1.0      # minikube
 
 # 2. Preview the rendered manifests (no changes made):
 kubectl kustomize kubernetes/base
+kubectl kustomize kubernetes/overlays/dev
+kubectl kustomize kubernetes/overlays/prod
 
-# 3. Apply the base (Namespace, ConfigMap, Deployment, Service):
-kubectl apply -k kubernetes/base
+# 3. Apply the dev overlay (Namespace, ConfigMap, Deployment, Service):
+kubectl apply -k kubernetes/overlays/dev
 
-# 4. Check it came up:
-kubectl get pods -n kubebase-dev
+# 4. Check it came up and reach it:
+kubectl get all -n kubebase-dev
+kubectl port-forward -n kubebase-dev svc/kubebase-api 8080:80
 ```
+
+> The **prod** overlay is only for practising a multi-environment setup locally.
+> Apply it deliberately when you want to test it:
+> `kubectl apply -k kubernetes/overlays/prod` (namespace `kubebase-prod`).
 
 See [`docs/operations.md`](docs/operations.md) for the full command reference,
 including how to reach the Service and how to remove **only this project** safely.
@@ -119,7 +138,7 @@ including how to reach the Service and how to remove **only this project** safel
 
 - [x] **Phase 1** — FastAPI demo app, Dockerfile, base Kubernetes manifests,
   Kustomize, CI
-- [ ] **Phase 2** — Kustomize overlays for `dev` / `staging` environments
+- [x] **Phase 2** — Kustomize overlays for `dev` and `prod` environments
 - [ ] **Phase 3** — Package the app as a **Helm chart**
 - [ ] **Phase 4** — **GitOps** delivery (Argo CD or Flux)
 - [ ] **Phase 5** — Ingress + TLS, and monitoring (Prometheus / Grafana)

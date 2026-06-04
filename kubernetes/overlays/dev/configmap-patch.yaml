@@ -1,0 +1,10 @@
+# Dev configuration — merged onto the base ConfigMap.
+# Makes it obvious, at the /config endpoint, that this is the dev environment.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubebase-config
+data:
+  APP_ENV: "dev"
+  APP_GREETING: "Hello from KubeBase Platform — DEV overlay (local Minikube)"
+  LOG_LEVEL: "debug"

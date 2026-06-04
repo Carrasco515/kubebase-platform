@@ -94,10 +94,13 @@ deploy to any cluster.
 
 ## Future Helm and GitOps path
 
-The current layout is intentionally a clean starting point. Planned evolution:
+The current layout is a clean starting point. **Kustomize overlays already exist**
+for `dev` (namespace `kubebase-dev`) and a local-learning `prod` (namespace
+`kubebase-prod`) — they patch the base's config and replica count without
+duplicating it. Planned evolution from here:
 
-1. **Kustomize overlays** — `dev` / `staging` overlays on top of this base for
-   per-environment differences (replica counts, config values, image tags).
+1. **More overlays / config** — additional per-environment differences as needed
+   (image tags, extra config), and possibly a `staging` overlay.
 2. **Helm chart** — package the app as a chart for templated, versioned releases
    with values files.
 3. **GitOps** — deliver the chart/manifests declaratively with **Argo CD** or

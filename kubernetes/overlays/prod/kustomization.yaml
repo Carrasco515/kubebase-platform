@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Prod overlay — a LOCAL LEARNING environment, NOT a real production cluster.
+# It demonstrates how a separate environment would differ from dev: its own
+# namespace, prod-flavoured config and higher replica count / stricter limits.
+#
+# Render:  kubectl kustomize kubernetes/overlays/prod
+# Apply:   kubectl apply -k kubernetes/overlays/prod   (only when intentionally testing)
+
+namespace: kubebase-prod
+
+resources:
+  - ../../base
+  - namespace.yaml
+
+# The base ships a kubebase-dev Namespace object. The `namespace:` field above
+# would rename it to kubebase-prod, which would then collide with our own
+# namespace.yaml. So we drop the inherited base Namespace first; our
+# namespace.yaml is the single source of truth for the prod namespace.
+# (Patches run before the namespace transformer, so we match it by its base
+# name "kubebase-dev".)
+patches:
+  - target:
+      kind: Namespace
+      name: kubebase-dev
+    patch: |
+      $patch: delete
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: kubebase-dev
+  - path: configmap-patch.yaml
+  - path: deployment-patch.yaml

@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kubebase-api
-  namespace: kubebase-dev
   labels:
     app.kubernetes.io/name: kubebase-platform
     app.kubernetes.io/component: api

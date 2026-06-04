@@ -1,0 +1,20 @@
+# Prod sizing — merged onto the base Deployment.
+# 3 replicas and slightly stricter resources than dev, to show how a busier
+# environment would be configured. Still modest enough to run on local Minikube.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubebase-api
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+        - name: api
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

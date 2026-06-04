@@ -48,15 +48,20 @@ jobs:
           echo "Found $count Kubernetes YAML file(s)."
           test "$count" -gt 0
 
-      - name: Build manifests with kustomize
+      - name: Build manifests with kustomize (base + overlays)
         run: |
-          # kubectl ships with a built-in kustomize on the GitHub runner.
+          # Pick whichever kustomize is available (kubectl ships one built-in).
           if command -v kubectl >/dev/null 2>&1; then
-            kubectl kustomize kubernetes/base >/dev/null
-            echo "OK: kubectl kustomize built the base successfully"
+            build() { kubectl kustomize "$1"; }
           elif command -v kustomize >/dev/null 2>&1; then
-            kustomize build kubernetes/base >/dev/null
-            echo "OK: kustomize built the base successfully"
+            build() { kustomize build "$1"; }
           else
             echo "Neither kubectl nor kustomize available — skipping (allowed)."
+            exit 0
           fi
+          for dir in kubernetes/base \
+                     kubernetes/overlays/dev \
+                     kubernetes/overlays/prod; do
+            build "$dir" >/dev/null
+            echo "OK: kustomize built $dir successfully"
+          done

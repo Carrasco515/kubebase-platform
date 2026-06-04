@@ -1,0 +1,11 @@
+# Prod configuration — merged onto the base ConfigMap.
+# Makes it obvious, at the /config endpoint, that this is the prod environment.
+# NOTE: this is a local learning "prod" — no real secrets, no real users.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubebase-config
+data:
+  APP_ENV: "prod"
+  APP_GREETING: "Hello from KubeBase Platform — PROD overlay (local learning environment)"
+  LOG_LEVEL: "info"
