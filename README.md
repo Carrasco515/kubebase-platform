@@ -66,7 +66,10 @@ kubebase-platform/
 │   ├── Chart.yaml
 │   ├── values.yaml          # + values-dev.yaml / values-prod.yaml
 │   └── templates/
-├── docs/                    # Architecture + operations
+├── gitops/                  # GitOps (Argo CD) examples
+│   ├── README.md
+│   └── argocd/              # Argo CD Application manifests (dev + prod example)
+├── docs/                    # Architecture, operations, GitOps
 └── .github/workflows/ci.yml # Read-only validation
 ```
 
@@ -178,13 +181,36 @@ helm uninstall kubebase-api -n kubebase-dev
 
 See [`docs/operations.md`](docs/operations.md) for the full Helm command reference.
 
+## GitOps with Argo CD (Phase 4 — preparation)
+
+The project includes **GitOps** examples that show how [Argo CD](https://argo-cd.readthedocs.io/)
+would deploy the Helm chart declaratively, with Git as the source of truth. These
+are **example/preparation** manifests — they do nothing until Argo CD is
+installed, sync is **manual** by default, and **prod is example-only**.
+
+```bash
+# Validate the chart (what GitOps would render) — no cluster involved:
+helm template kubebase-api charts/kubebase-api -f charts/kubebase-api/values-dev.yaml
+
+# Structure-check the Argo CD Application manifests:
+for f in gitops/argocd/kubebase-api-dev.yaml gitops/argocd/kubebase-api-prod.yaml; do
+  test -f "$f" && grep -q 'kind: Application' "$f" && echo "OK: $f"
+done
+```
+
+- [`gitops/README.md`](gitops/README.md) — what GitOps is and what these files do
+- [`docs/gitops.md`](docs/gitops.md) — the full workflow, safe testing and risks
+
+> Applying the Argo CD manifests requires Argo CD to be installed and is out of
+> scope for this phase. See `docs/gitops.md` before trying it.
+
 ## Roadmap
 
 - [x] **Phase 1** — FastAPI demo app, Dockerfile, base Kubernetes manifests,
   Kustomize, CI
 - [x] **Phase 2** — Kustomize overlays for `dev` and `prod` environments
 - [x] **Phase 3** — Package the app as a **Helm chart** (`charts/kubebase-api`)
-- [ ] **Phase 4** — **GitOps** delivery (Argo CD or Flux)
+- [x] **Phase 4** — **GitOps** examples (Argo CD Application manifests, `gitops/`)
 - [ ] **Phase 5** — Ingress + TLS, and monitoring (Prometheus / Grafana)
 
 ## Documentation
@@ -193,6 +219,8 @@ See [`docs/operations.md`](docs/operations.md) for the full Helm command referen
 |---|---|
 | [`docs/architecture.md`](docs/architecture.md) | App, image, namespace, Deployment, Service, ConfigMap, Secret, and the future Helm/GitOps path |
 | [`docs/operations.md`](docs/operations.md) | Day-to-day commands: build, apply, inspect pods, logs, and safe cleanup |
+| [`docs/gitops.md`](docs/gitops.md) | GitOps workflow with Argo CD: desired vs. live state, dev/prod Applications, safe testing, risks |
+| [`gitops/README.md`](gitops/README.md) | Overview of the GitOps examples in `gitops/` |
 
 ---
 

@@ -1,0 +1,49 @@
+# Argo CD Application — KubeBase Platform (DEV)
+#
+# Tells Argo CD to deploy the Helm chart in this repo into the kubebase-dev
+# namespace using the dev values. This is an EXAMPLE manifest: applying it does
+# nothing until Argo CD is installed in the cluster (see docs/gitops.md).
+#
+# Sync is MANUAL by default (no spec.syncPolicy.automated), so Argo CD will
+# detect drift and show "OutOfSync" but will NOT change the cluster until you
+# click Sync (or run `argocd app sync kubebase-api-dev`). This is the safe,
+# conservative default. See the commented "automated" block below to opt in to
+# auto-sync later.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubebase-api-dev
+  # The Application object itself lives in the argocd namespace.
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: kubebase-platform
+    environment: dev
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/Carrasco515/kubebase-platform.git
+    targetRevision: main
+    # Path to the Helm chart within the repo.
+    path: charts/kubebase-api
+    helm:
+      # valueFiles are relative to the chart path above.
+      valueFiles:
+        - values-dev.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kubebase-dev
+
+  syncPolicy:
+    # Manual sync only. CreateNamespace lets Argo CD create kubebase-dev if it
+    # does not exist yet. Nothing here changes workloads automatically.
+    syncOptions:
+      - CreateNamespace=true
+
+    # --- OPTIONAL: enable automated sync later (leave commented for safety) ---
+    # automated:
+    #   prune: false      # set true to let Argo CD delete resources removed from Git
+    #   selfHeal: false   # set true to let Argo CD revert manual cluster changes
+    # Enable these only once you understand they let Argo CD change the cluster
+    # on its own whenever Git changes. Keep them off while learning.

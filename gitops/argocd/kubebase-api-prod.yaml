@@ -1,0 +1,39 @@
+# Argo CD Application — KubeBase Platform (PROD) — EXAMPLE ONLY
+#
+# ⚠️  This is a LOCAL LEARNING "prod" example. It is NOT a real production
+#     deployment and must NOT be applied without explicit, deliberate intent.
+#     Applying it does nothing until Argo CD is installed (see docs/gitops.md),
+#     and even then sync is MANUAL by default.
+#
+# It deploys the same Helm chart into the kubebase-prod namespace using the prod
+# values profile. No real production secrets are involved — the chart's example
+# Secret is disabled by default and holds placeholders only.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubebase-api-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: kubebase-platform
+    environment: prod
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/Carrasco515/kubebase-platform.git
+    targetRevision: main
+    path: charts/kubebase-api
+    helm:
+      valueFiles:
+        - values-prod.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kubebase-prod
+
+  syncPolicy:
+    # Manual sync only — never auto-sync a "prod" example. Argo CD will only
+    # report drift; it will not change the cluster until you sync deliberately.
+    syncOptions:
+      - CreateNamespace=true
+    # automated sync is intentionally NOT configured for prod.

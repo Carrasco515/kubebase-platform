@@ -97,7 +97,7 @@ deploy to any cluster.
 The project demonstrates a realistic progression of delivery tooling:
 
 ```
-App (FastAPI)  ->  Docker image  ->  Kubernetes manifests  ->  Kustomize overlays  ->  Helm chart
+App (FastAPI) -> Docker image -> Kubernetes manifests -> Kustomize overlays -> Helm chart -> GitOps (Argo CD)
 ```
 
 - **Kustomize** (Phase 2) — raw manifests plus `dev`/`prod` overlays that patch
@@ -107,13 +107,18 @@ App (FastAPI)  ->  Docker image  ->  Kubernetes manifests  ->  Kustomize overlay
   is the **packaging/templating** path; Kustomize stays as the raw-manifest
   learning path. Both deploy the same app (don't run both into one namespace at
   once). The chart's example Secret is disabled by default (placeholders only).
+- **GitOps / Argo CD** (Phase 4) — example `Application` manifests
+  ([`gitops/argocd/`](../gitops/argocd/)) that deploy the Helm chart declaratively
+  with Git as the source of truth. Sync is manual by default; prod is example
+  only. See [`gitops.md`](gitops.md). These are preparation manifests — they do
+  nothing until Argo CD is installed.
 
 Planned evolution from here:
 
 1. **More overlays / chart values** — additional per-environment differences
    (image tags, extra config), and possibly a `staging` profile.
-2. **GitOps** — deliver the chart/manifests declaratively with **Argo CD** or
-   **Flux**, so the cluster state always matches Git.
+2. **Run GitOps for real** — install Argo CD locally and let it reconcile the
+   dev Application (optionally enabling automated sync once understood).
 3. **Ingress + TLS and monitoring** — expose the Service through an Ingress
    controller and add Prometheus/Grafana observability.
 

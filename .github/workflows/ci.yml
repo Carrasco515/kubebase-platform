@@ -80,3 +80,30 @@ jobs:
           helm template kubebase-api charts/kubebase-api \
             -f charts/kubebase-api/values-prod.yaml >/dev/null
           echo "OK: helm template rendered (prod profile)"
+
+      - name: Validate GitOps Argo CD manifests (presence + structure)
+        run: |
+          # We cannot fully validate kind: Application without the Argo CD CRDs,
+          # so this is a safe presence + structure + YAML-parse check. It never
+          # contacts a cluster and never deploys anything.
+          rc=0
+          for f in gitops/argocd/kubebase-api-dev.yaml \
+                   gitops/argocd/kubebase-api-prod.yaml; do
+            if [ ! -f "$f" ]; then
+              echo "MISSING: $f" >&2; rc=1; continue
+            fi
+            for key in 'kind: Application' 'argoproj.io' 'repoURL' \
+                       'targetRevision: main' 'namespace:'; do
+              if ! grep -q "$key" "$f"; then
+                echo "STRUCTURE: '$key' not found in $f" >&2; rc=1
+              fi
+            done
+            # Best-effort YAML parse (PyYAML if present) — informational only.
+            if python -c 'import yaml' 2>/dev/null; then
+              python -c "import yaml,sys; list(yaml.safe_load_all(open('$f')))" \
+                && echo "OK: $f (valid YAML, structure checks passed)"
+            else
+              echo "OK: $f (structure checks passed; PyYAML not installed — parse skipped)"
+            fi
+          done
+          exit "$rc"

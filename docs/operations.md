@@ -138,6 +138,47 @@ helm uninstall kubebase-api -n kubebase-dev
 > (`secret.enabled=false`) and contains placeholders only — never put real
 > secrets in values files.
 
+## GitOps (Argo CD) — preparation
+
+Example Argo CD `Application` manifests live in `gitops/argocd/`. They describe
+how the Helm chart would be deployed from Git. See [`gitops.md`](gitops.md) for
+the full workflow. **Nothing here changes a cluster** unless you install Argo CD
+and sync deliberately.
+
+### Render what GitOps would deploy (no cluster)
+
+```bash
+helm template kubebase-api charts/kubebase-api -f charts/kubebase-api/values-dev.yaml
+helm template kubebase-api charts/kubebase-api -f charts/kubebase-api/values-prod.yaml
+```
+
+### Validate the Argo CD manifests locally (no Argo CD CRDs needed)
+
+```bash
+for f in gitops/argocd/kubebase-api-dev.yaml gitops/argocd/kubebase-api-prod.yaml; do
+  test -f "$f" \
+    && grep -q 'kind: Application' "$f" \
+    && grep -q 'argoproj.io' "$f" \
+    && echo "OK: $f"
+done
+```
+
+> `kubectl --dry-run=client` can't fully validate `kind: Application` without the
+> Argo CD CRDs installed, so this presence + structure check is the safe option.
+
+### Apply the dev Application (only after you install Argo CD)
+
+```bash
+# Requires Argo CD already installed in the argocd namespace. Sync is MANUAL.
+kubectl apply -f gitops/argocd/kubebase-api-dev.yaml
+# Then sync deliberately via the Argo CD UI or:  argocd app sync kubebase-api-dev
+```
+
+> ⚠️ Do **not** apply `kubebase-api-prod.yaml` unless you explicitly intend to —
+> it is a local learning example. And do not run the Kustomize dev overlay and a
+> GitOps dev release into `kubebase-dev` at the same time (they manage the same
+> objects).
+
 ## Check pods and resources
 
 ```bash
