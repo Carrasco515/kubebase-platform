@@ -94,18 +94,27 @@ deploy to any cluster.
 
 ## Future Helm and GitOps path
 
-The current layout is a clean starting point. **Kustomize overlays already exist**
-for `dev` (namespace `kubebase-dev`) and a local-learning `prod` (namespace
-`kubebase-prod`) — they patch the base's config and replica count without
-duplicating it. Planned evolution from here:
+The project demonstrates a realistic progression of delivery tooling:
 
-1. **More overlays / config** — additional per-environment differences as needed
-   (image tags, extra config), and possibly a `staging` overlay.
-2. **Helm chart** — package the app as a chart for templated, versioned releases
-   with values files.
-3. **GitOps** — deliver the chart/manifests declaratively with **Argo CD** or
+```
+App (FastAPI)  ->  Docker image  ->  Kubernetes manifests  ->  Kustomize overlays  ->  Helm chart
+```
+
+- **Kustomize** (Phase 2) — raw manifests plus `dev`/`prod` overlays that patch
+  the base's config and replica count without duplicating it.
+- **Helm** (Phase 3) — the same app packaged as a chart (`charts/kubebase-api`)
+  with `values.yaml` and `values-dev.yaml` / `values-prod.yaml` profiles. Helm
+  is the **packaging/templating** path; Kustomize stays as the raw-manifest
+  learning path. Both deploy the same app (don't run both into one namespace at
+  once). The chart's example Secret is disabled by default (placeholders only).
+
+Planned evolution from here:
+
+1. **More overlays / chart values** — additional per-environment differences
+   (image tags, extra config), and possibly a `staging` profile.
+2. **GitOps** — deliver the chart/manifests declaratively with **Argo CD** or
    **Flux**, so the cluster state always matches Git.
-4. **Ingress + TLS and monitoring** — expose the Service through an Ingress
+3. **Ingress + TLS and monitoring** — expose the Service through an Ingress
    controller and add Prometheus/Grafana observability.
 
 This mirrors a realistic progression from raw manifests → Kustomize → Helm →

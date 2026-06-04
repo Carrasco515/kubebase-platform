@@ -1,0 +1,19 @@
+# Prod profile — a LOCAL LEARNING "prod", NOT a real production environment.
+# It only demonstrates how a busier environment would be configured.
+# Use with: helm template/upgrade ... -f charts/kubebase-api/values-prod.yaml
+
+replicaCount: 3
+
+config:
+  appEnv: "prod"
+  greeting: "Hello from KubeBase Platform — PROD (Helm, local learning environment)"
+  logLevel: "info"
+
+# Slightly stricter than dev. Still modest enough for local Minikube.
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

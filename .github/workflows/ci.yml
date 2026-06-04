@@ -65,3 +65,18 @@ jobs:
             build "$dir" >/dev/null
             echo "OK: kustomize built $dir successfully"
           done
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Validate Helm chart (lint + render default/dev/prod)
+        run: |
+          helm lint charts/kubebase-api
+          helm template kubebase-api charts/kubebase-api >/dev/null
+          echo "OK: helm template rendered (default values)"
+          helm template kubebase-api charts/kubebase-api \
+            -f charts/kubebase-api/values-dev.yaml >/dev/null
+          echo "OK: helm template rendered (dev profile)"
+          helm template kubebase-api charts/kubebase-api \
+            -f charts/kubebase-api/values-prod.yaml >/dev/null
+          echo "OK: helm template rendered (prod profile)"

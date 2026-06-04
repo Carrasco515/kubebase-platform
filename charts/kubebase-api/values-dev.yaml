@@ -1,0 +1,17 @@
+# Dev profile — local development on Minikube.
+# Use with: helm template/upgrade ... -f charts/kubebase-api/values-dev.yaml
+
+replicaCount: 2
+
+config:
+  appEnv: "dev"
+  greeting: "Hello from KubeBase Platform — DEV (Helm)"
+  logLevel: "debug"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi

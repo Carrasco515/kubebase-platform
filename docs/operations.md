@@ -94,6 +94,50 @@ kubectl get all -n kubebase-prod
 > Applies into the separate `kubebase-prod` namespace. Remember the image must
 > be loaded into the cluster first (same `minikube image load` step as dev).
 
+## Helm (packaging path)
+
+The app is also packaged as a Helm chart at `charts/kubebase-api`. Kustomize
+remains the raw-manifest + overlay learning path; Helm is the packaging and
+templating path. Both deploy the same app — **don't run both into the same
+namespace at once**, as they manage overlapping objects.
+
+### Render (no changes made)
+
+```bash
+helm template kubebase-api charts/kubebase-api
+helm template kubebase-api charts/kubebase-api -f charts/kubebase-api/values-dev.yaml
+helm template kubebase-api charts/kubebase-api -f charts/kubebase-api/values-prod.yaml
+```
+
+### Lint
+
+```bash
+helm lint charts/kubebase-api
+```
+
+### Install / upgrade — dev (only when intentionally testing)
+
+```bash
+helm upgrade --install kubebase-api charts/kubebase-api \
+  -n kubebase-dev --create-namespace \
+  -f charts/kubebase-api/values-dev.yaml
+
+# Check and reach it:
+kubectl get all -n kubebase-dev
+kubectl port-forward -n kubebase-dev svc/kubebase-api 8080:80
+```
+
+### Uninstall — dev
+
+```bash
+helm uninstall kubebase-api -n kubebase-dev
+```
+
+> The **prod** values are a local learning profile — render-only unless you
+> deliberately test them. The chart's example Secret is **disabled by default**
+> (`secret.enabled=false`) and contains placeholders only — never put real
+> secrets in values files.
+
 ## Check pods and resources
 
 ```bash
@@ -170,4 +214,10 @@ kubectl delete namespace kubebase-prod
 for d in kubernetes/base kubernetes/overlays/dev kubernetes/overlays/prod; do
   kubectl kustomize "$d" >/dev/null && echo "kustomize build OK: $d"
 done
+
+# Lint and render the Helm chart (default + both profiles):
+helm lint charts/kubebase-api
+helm template kubebase-api charts/kubebase-api >/dev/null && echo "helm OK: default"
+helm template kubebase-api charts/kubebase-api -f charts/kubebase-api/values-dev.yaml  >/dev/null && echo "helm OK: dev"
+helm template kubebase-api charts/kubebase-api -f charts/kubebase-api/values-prod.yaml >/dev/null && echo "helm OK: prod"
 ```

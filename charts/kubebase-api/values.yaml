@@ -1,0 +1,91 @@
+# Default values for the kubebase-api chart.
+# These defaults match the local, dev-friendly setup used elsewhere in the
+# project. Override them with -f values-dev.yaml / values-prod.yaml or --set.
+
+# Override the chart name / full release name if needed.
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 2
+
+image:
+  repository: kubebase-platform
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent   # local image loaded into the cluster
+
+# Port the container listens on (uvicorn in the app).
+containerPort: 8000
+
+service:
+  type: ClusterIP
+  port: 80
+
+serviceAccount:
+  # Create a dedicated ServiceAccount for the app.
+  create: true
+  # If empty and create is true, a name is generated from the release.
+  name: ""
+
+# Non-secret configuration — rendered into a ConfigMap and injected as env vars.
+config:
+  appName: "KubeBase Platform"
+  appEnv: "local"
+  greeting: "Hello from KubeBase Platform (Helm)!"
+  logLevel: "info"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+# Probes hit the app's /health endpoint. `port: http` refers to the named
+# container port defined in the Deployment template.
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+podAnnotations: {}
+podLabels: {}
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Example Secret — DISABLED by default. This is for demonstration only.
+# Never commit real secrets. To experiment locally, set enabled: true and put
+# PLACEHOLDER values under data (they will be base64-encoded by Kubernetes).
+secret:
+  enabled: false
+  data: {}
+    # API_TOKEN: "CHANGE_ME_example_token_do_not_use"
+    # DB_PASSWORD: "CHANGE_ME_example_password_do_not_use"
+
+# Optional Ingress — DISABLED by default (the project reaches the app via
+# kubectl port-forward). Enable and configure if you add an ingress controller.
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: kubebase.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []

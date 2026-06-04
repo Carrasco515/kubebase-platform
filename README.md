@@ -62,6 +62,10 @@ kubebase-platform/
 │   └── overlays/            # Per-environment overlays (patches on the base)
 │       ├── dev/             # local Minikube — namespace kubebase-dev
 │       └── prod/            # local learning "prod" — namespace kubebase-prod
+├── charts/kubebase-api/     # Helm chart (packaging/templating path)
+│   ├── Chart.yaml
+│   ├── values.yaml          # + values-dev.yaml / values-prod.yaml
+│   └── templates/
 ├── docs/                    # Architecture + operations
 └── .github/workflows/ci.yml # Read-only validation
 ```
@@ -134,12 +138,52 @@ kubectl port-forward -n kubebase-dev svc/kubebase-api 8080:80
 See [`docs/operations.md`](docs/operations.md) for the full command reference,
 including how to reach the Service and how to remove **only this project** safely.
 
+## Deploy with Helm (Phase 3)
+
+The same app is also packaged as a **Helm chart** (`charts/kubebase-api`) — a
+templating/packaging path alongside the raw manifests. Kustomize stays as the
+"learn the raw Kubernetes objects + overlays" path; Helm is the "package it with
+values" path.
+
+```bash
+# Render the chart (no changes made):
+helm template kubebase-api charts/kubebase-api
+helm template kubebase-api charts/kubebase-api -f charts/kubebase-api/values-dev.yaml
+helm template kubebase-api charts/kubebase-api -f charts/kubebase-api/values-prod.yaml
+
+# Lint the chart:
+helm lint charts/kubebase-api
+
+# Install/upgrade the DEV profile (only when you choose to):
+helm upgrade --install kubebase-api charts/kubebase-api \
+  -n kubebase-dev --create-namespace \
+  -f charts/kubebase-api/values-dev.yaml
+
+# Check it and reach it:
+kubectl get all -n kubebase-dev
+kubectl port-forward -n kubebase-dev svc/kubebase-api 8080:80
+
+# Uninstall:
+helm uninstall kubebase-api -n kubebase-dev
+```
+
+> The **prod** values (`values-prod.yaml`) are a *local learning* profile, not a
+> real production environment. Treat them as render-only unless you deliberately
+> test them. The example Secret in the chart is **disabled by default** and holds
+> placeholders only.
+>
+> ⚠️ Don't run the Kustomize dev overlay and the Helm dev release into
+> `kubebase-dev` at the same time — they manage overlapping objects. Pick one
+> path per cluster, or use a separate namespace/release.
+
+See [`docs/operations.md`](docs/operations.md) for the full Helm command reference.
+
 ## Roadmap
 
 - [x] **Phase 1** — FastAPI demo app, Dockerfile, base Kubernetes manifests,
   Kustomize, CI
 - [x] **Phase 2** — Kustomize overlays for `dev` and `prod` environments
-- [ ] **Phase 3** — Package the app as a **Helm chart**
+- [x] **Phase 3** — Package the app as a **Helm chart** (`charts/kubebase-api`)
 - [ ] **Phase 4** — **GitOps** delivery (Argo CD or Flux)
 - [ ] **Phase 5** — Ingress + TLS, and monitoring (Prometheus / Grafana)
 

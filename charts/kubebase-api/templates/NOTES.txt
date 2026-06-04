@@ -1,0 +1,28 @@
+✅ {{ include "kubebase-api.fullname" . }} was deployed (release: {{ .Release.Name }}, namespace: {{ .Release.Namespace }}).
+
+App environment: {{ .Values.config.appEnv }}  |  replicas: {{ .Values.replicaCount }}
+
+1. Check the pods are Running:
+
+   kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+2. Reach the app locally with a port-forward (Service is {{ .Values.service.type }}):
+
+   kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "kubebase-api.fullname" . }} 8080:{{ .Values.service.port }}
+
+   Then open:
+     http://localhost:8080/
+     http://localhost:8080/health
+     http://localhost:8080/config
+
+{{- if .Values.ingress.enabled }}
+
+3. Ingress is enabled. Hosts:
+{{- range .Values.ingress.hosts }}
+     http://{{ .host }}/
+{{- end }}
+{{- end }}
+
+To uninstall:
+
+   helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}

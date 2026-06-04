@@ -1,0 +1,18 @@
+apiVersion: v2
+name: kubebase-api
+description: A beginner-friendly Helm chart for the KubeBase Platform FastAPI demo app
+type: application
+
+# Chart version — bump when the chart changes.
+version: 0.1.0
+# Version of the app this chart deploys (matches the Docker image tag default).
+appVersion: "0.1.0"
+
+keywords:
+  - kubebase
+  - fastapi
+  - kubernetes
+  - learning
+home: https://github.com/Carrasco515/kubebase-platform
+maintainers:
+  - name: David Carrasco
