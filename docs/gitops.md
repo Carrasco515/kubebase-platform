@@ -105,6 +105,73 @@ kubectl port-forward -n kubebase-dev svc/kubebase-api 8080:80
 > objects named `kubebase-api` in `kubebase-dev`. Don't run two managers against
 > the same namespace at once — pick one, or use a separate namespace.
 
+## Local Argo CD dev test
+
+This section records an actual local test of the GitOps dev path on **Minikube**.
+It was a deliberate, scoped exercise: **only the dev Application** was applied and
+synced. Prod was **not** touched.
+
+**What was done**
+
+- Argo CD was installed locally into the **`argocd`** namespace only (official
+  stable manifest). It was **not** exposed publicly — access was via a local
+  port-forward only.
+- Only the dev Application was applied: **`kubebase-api-dev`** (from
+  [`gitops/argocd/kubebase-api-dev.yaml`](../gitops/argocd/kubebase-api-dev.yaml)),
+  destination namespace **`kubebase-dev`**.
+- Argo CD created the Helm release for the dev chart and synced it.
+- Final Argo CD status: **`Synced` and `Healthy`** — two pods Running, the
+  `kubebase-api-dev` Service reachable, and `/`, `/health`, `/config` all
+  responding (with `app_env=dev`, `log_level=debug` and the dev greeting).
+
+**What was deliberately NOT done**
+
+- The **prod** Application (`kubebase-api-prod.yaml`) was **not** applied or synced.
+- The **`kubebase-prod`** namespace was **not** created.
+- No secrets were printed, and the Argo CD admin password was **not** displayed in
+  any output, log or doc.
+
+> 🔒 Never print the Argo CD admin password or any secret into logs or docs.
+> Retrieve the initial admin password yourself when needed (e.g.
+> `argocd admin initial-password -n argocd`) and do not paste it anywhere.
+
+**Check the dev Application and workload (read-only)**
+
+```bash
+kubectl get application kubebase-api-dev -n argocd
+kubectl get pods -n kubebase-dev
+kubectl get svc -n kubebase-dev
+```
+
+**Access locally via port-forward (Argo CD UI + the dev app)**
+
+```bash
+# Argo CD UI (https, self-signed cert) — local only, not exposed publicly:
+kubectl port-forward svc/argocd-server -n argocd 8082:443
+
+# The dev app deployed by Argo CD (note: service is kubebase-api-dev):
+kubectl port-forward -n kubebase-dev svc/kubebase-api-dev 8080:80
+```
+
+**Endpoint checks**
+
+```bash
+curl http://localhost:8080
+curl http://localhost:8080/health
+curl http://localhost:8080/config
+```
+
+**Stop the local port-forwards when done**
+
+```bash
+pkill -f "port-forward svc/argocd-server"
+pkill -f "port-forward -n kubebase-dev svc/kubebase-api-dev"
+```
+
+> Reminder: the Argo CD Helm release manages a Service named `kubebase-api-dev`,
+> while the Kustomize dev overlay manages `kubebase-api` — both in `kubebase-dev`.
+> Don't run two managers against the same objects; keep their names/paths distinct.
+
 ## Cleanup commands
 
 ```bash

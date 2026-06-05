@@ -201,6 +201,11 @@ done
 - [`gitops/README.md`](gitops/README.md) — what GitOps is and what these files do
 - [`docs/gitops.md`](docs/gitops.md) — the full workflow, safe testing and risks
 
+> **Local test:** the dev Argo CD Application (`kubebase-api-dev`) was tested
+> locally in Minikube and reached **`Synced` and `Healthy`**. **Prod remains
+> example-only and was not applied.** See [`docs/gitops.md`](docs/gitops.md)
+> ("Local Argo CD dev test").
+
 > Applying the Argo CD manifests requires Argo CD to be installed and is out of
 > scope for this phase. See `docs/gitops.md` before trying it.
 

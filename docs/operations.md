@@ -179,6 +179,40 @@ kubectl apply -f gitops/argocd/kubebase-api-dev.yaml
 > GitOps dev release into `kubebase-dev` at the same time (they manage the same
 > objects).
 
+### Check Argo CD dev status (read-only)
+
+After the dev Application has been applied and synced (see the
+["Local Argo CD dev test"](gitops.md#local-argo-cd-dev-test) section in
+`gitops.md`):
+
+```bash
+# Sync + health of the dev Application:
+kubectl get application kubebase-api-dev -n argocd
+
+# The workload Argo CD created (service is kubebase-api-dev):
+kubectl get pods -n kubebase-dev
+kubectl get svc -n kubebase-dev
+```
+
+### Stop local port-forwards
+
+Argo CD is reached locally via a port-forward (never exposed publicly). Stop the
+forwards when you are done:
+
+```bash
+pkill -f "port-forward svc/argocd-server"
+pkill -f "port-forward -n kubebase-dev svc/kubebase-api-dev"
+```
+
+### Avoid applying prod by mistake
+
+- Apply **only** the dev Application: `kubectl apply -f gitops/argocd/kubebase-api-dev.yaml`.
+- **Never** apply `gitops/argocd/kubebase-api-prod.yaml` and **never** sync a prod
+  Application — prod is example-only and `kubebase-prod` should not be created.
+- Prefer applying a single file by name; avoid `kubectl apply -f gitops/argocd/`
+  (a directory apply would pull in the prod manifest too).
+- Never print the Argo CD admin password or any secret into logs or docs.
+
 ## Check pods and resources
 
 ```bash
