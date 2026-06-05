@@ -1,0 +1,7 @@
+# This folder holds optional README screenshots (PNGs).
+# Suggested files:
+#   kubebase-readme-preview.png
+#   github-actions-ci.png
+#   argocd-dev-healthy.png
+#   metrics-endpoint.png
+# Kept in git via this placeholder so the folder exists even when empty.

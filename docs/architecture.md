@@ -104,40 +104,60 @@ This is the **Phase 5 observability layer**: the app and manifests are made
 ## CI
 
 A GitHub Actions workflow ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml))
-validates the project on every push/PR — **read-only**: it checks Python syntax,
-verifies required files exist, confirms Kubernetes YAML is present and builds the
-Kustomize base with `kubectl kustomize`. It does **not** build/push images or
-deploy to any cluster.
+validates the project on every push/PR — **read-only**. It:
 
-## Future Helm and GitOps path
+- checks Python syntax (`py_compile`) and that required files exist,
+- builds the Kustomize **base, dev and prod** with `kubectl kustomize`,
+- runs `helm lint` and renders the chart for **default, dev and prod** values,
+- structure/parse-checks the GitOps Argo CD `Application` manifests,
+- verifies the observability wiring (the `/metrics` route, the `prometheus-client`
+  dependency, and that scrape annotations render), and
+- validates the Grafana dashboard JSON if present.
 
-The project demonstrates a realistic progression of delivery tooling:
+It does **not** build/push images, contact a cluster, or deploy anything.
 
+## Delivery progression (Kustomize → Helm → GitOps)
+
+The project deliberately delivers the **same app** through progressively
+higher-level tooling — the realistic path a Platform Engineering team follows:
+
+```mermaid
+flowchart LR
+    A[FastAPI app] --> B[Docker image]
+    B --> C[Kubernetes base<br/>Deployment · Service · ConfigMap]
+    C --> D[Kustomize overlays<br/>dev · prod]
+    C --> E[Helm chart<br/>charts/kubebase-api]
+    E --> F[Argo CD GitOps<br/>dev synced · prod example]
+    A -. /metrics .-> G[Prometheus → Grafana]
 ```
-App (FastAPI) -> Docker image -> Kubernetes manifests -> Kustomize overlays -> Helm chart -> GitOps (Argo CD)
-```
 
-- **Kustomize** (Phase 2) — raw manifests plus `dev`/`prod` overlays that patch
-  the base's config and replica count without duplicating it.
-- **Helm** (Phase 3) — the same app packaged as a chart (`charts/kubebase-api`)
-  with `values.yaml` and `values-dev.yaml` / `values-prod.yaml` profiles. Helm
-  is the **packaging/templating** path; Kustomize stays as the raw-manifest
-  learning path. Both deploy the same app (don't run both into one namespace at
-  once). The chart's example Secret is disabled by default (placeholders only).
-- **GitOps / Argo CD** (Phase 4) — example `Application` manifests
-  ([`gitops/argocd/`](../gitops/argocd/)) that deploy the Helm chart declaratively
-  with Git as the source of truth. Sync is manual by default; prod is example
-  only. See [`gitops.md`](gitops.md). These are preparation manifests — they do
-  nothing until Argo CD is installed.
+- **Kustomize overlays** (Phase 2) — the base manifests plus `dev`/`prod`
+  overlays ([`kubernetes/overlays/`](../kubernetes/overlays/)) that patch config
+  and replica count without duplicating the base.
+- **Helm chart** (Phase 3) — the same app packaged as a chart
+  ([`charts/kubebase-api`](../charts/kubebase-api/)) with `values.yaml` and
+  `values-dev.yaml` / `values-prod.yaml` profiles. Helm is the
+  packaging/templating path; Kustomize stays as the raw-manifest path. Both
+  deploy the same app — don't run both into one namespace at once. The chart's
+  example Secret is disabled by default (placeholders only).
+- **GitOps / Argo CD** (Phase 4) — `Application` manifests
+  ([`gitops/argocd/`](../gitops/argocd/)) deploy the Helm chart declaratively with
+  Git as the source of truth. Sync is manual by default. The **dev** Application
+  was reconciled locally to **Synced & Healthy**; **prod is example-only** and was
+  not applied. See [`gitops.md`](gitops.md).
+- **Observability** (Phase 5) — the `/metrics` endpoint, pod scrape annotations
+  and a Grafana **starter dashboard** placeholder
+  ([`observability/grafana/kubebase-api-dashboard.json`](../observability/grafana/kubebase-api-dashboard.json)),
+  generic and safe (no hardcoded Prometheus URL). See [`observability.md`](observability.md).
 
-Planned evolution from here:
+Planned next (Phase 6):
 
-1. **More overlays / chart values** — additional per-environment differences
-   (image tags, extra config), and possibly a `staging` profile.
-2. **Run GitOps for real** — install Argo CD locally and let it reconcile the
-   dev Application (optionally enabling automated sync once understood).
-3. **Ingress + TLS and monitoring** — expose the Service through an Ingress
-   controller and add Prometheus/Grafana observability.
+1. **Ingress + TLS** — expose the Service through an Ingress controller instead of
+   `kubectl port-forward`.
+2. **A real monitoring stack** — install `kube-prometheus-stack` and import the
+   Grafana dashboard, optionally adding a `ServiceMonitor`/`PodMonitor`.
+3. **More profiles** — e.g. a `staging` overlay/values set, and per-environment
+   image tags.
 
 This mirrors a realistic progression from raw manifests → Kustomize → Helm →
-GitOps that Platform Engineering teams use in practice.
+GitOps → observability that platform teams use in practice.

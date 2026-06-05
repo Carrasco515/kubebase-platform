@@ -12,6 +12,14 @@ non-secret configuration and an example Secret to show the pattern. Everything i
 designed to run on a **local cluster** (minikube, kind or Docker Desktop) and is
 validated by a read-only CI pipeline.
 
+> **For recruiters & reviewers:** This is a hands-on learning project that takes
+> one small app through a realistic delivery chain — **Docker → Kubernetes →
+> Kustomize → Helm → GitOps (Argo CD) → observability** — with read-only CI and
+> documentation at each step. It runs entirely on a local cluster, uses no real
+> secrets, and keeps "prod" as a clearly-labelled local example. It shows
+> *junior-level DevOps / Platform Engineering* fundamentals end to end, not a
+> production system.
+
 ## Why I built it
 
 After building [CloudBase Lab](https://github.com/Carrasco515/cloudbase-lab) — my
@@ -20,16 +28,37 @@ properly. KubeBase Platform is my hands-on way to understand how an app moves fr
 a container into a cluster: namespaces, Deployments, Services, configuration,
 health probes, resource limits and a clean manifest layout I can grow over time.
 
-## What it demonstrates
+## DevOps skills demonstrated
 
-- **Containerising an app** with a small, non-root Dockerfile
-- **Kubernetes core objects** — Namespace, Deployment, Service, ConfigMap, Secret
-- **Health probes** (readiness + liveness) and **resource requests/limits**
-- **Configuration management** — non-secret config via ConfigMap, secrets kept
-  out of Git (only an example Secret is tracked)
-- **Kustomize** for assembling the base deployment
-- **CI** with GitHub Actions: Python syntax check, required-file checks and a
-  `kubectl kustomize` build — no deployment to a real cluster
+- **Containerization** — small, non-root Dockerfile on `python:3.12-slim`.
+- **Kubernetes manifests** — Namespace, Deployment (readiness + liveness probes,
+  resource requests/limits), Service and ConfigMap.
+- **Kustomize overlays** — a shared `base` with `dev` / `prod` overlays that patch
+  config and replica counts without duplication.
+- **Helm packaging** — the same app as a templated chart with `values-dev.yaml` /
+  `values-prod.yaml` profiles.
+- **GitOps with Argo CD** — `Application` manifests; the dev Application was
+  reconciled locally to **Synced & Healthy** (prod left as example-only).
+- **CI validation** — read-only GitHub Actions: Python compile, Kustomize build,
+  Helm lint/template, GitOps + observability checks. No deployment, no cluster.
+- **Observability** — a Prometheus-style `/metrics` endpoint, pod scrape
+  annotations and a Grafana starter dashboard.
+- **Operations documentation** — runbook-style docs for build, deploy, inspect
+  and safe cleanup.
+- **Security hygiene & safe defaults** — runs as non-root, no real secrets in Git,
+  manual GitOps sync, and "prod" kept as a clearly-labelled local example.
+
+## Tech stack
+
+| Area | Tools |
+|---|---|
+| App | Python, FastAPI, uvicorn |
+| Container | Docker |
+| Orchestration | Kubernetes (local: Minikube / kind / Docker Desktop) |
+| Config / templating | Kustomize, Helm |
+| GitOps | Argo CD |
+| Observability | Prometheus client (`/metrics`), Grafana (dashboard JSON) |
+| CI | GitHub Actions (read-only validation) |
 
 ## How it complements CloudBase Lab
 
@@ -38,7 +67,8 @@ health probes, resource limits and a clean manifest layout I can grow over time.
 | Orchestration | Docker Compose | Kubernetes |
 | Focus | Self-hosted homelab stack | Platform / app-on-Kubernetes lab |
 | Config & secrets | `.env` files | ConfigMap + Secret |
-| Updates | Watchtower (opt-in) | (roadmap: Helm + GitOps) |
+| Packaging / delivery | Compose file | Kustomize → Helm → Argo CD GitOps |
+| Observability | container logs | logs + Prometheus `/metrics` |
 
 CloudBase Lab shows I can run a real multi-service stack; KubeBase Platform shows
 I'm building the **Kubernetes and Platform Engineering** skills on top of that.
@@ -69,9 +99,29 @@ kubebase-platform/
 ├── gitops/                  # GitOps (Argo CD) examples
 │   ├── README.md
 │   └── argocd/              # Argo CD Application manifests (dev + prod example)
-├── docs/                    # Architecture, operations, GitOps
+├── observability/
+│   └── grafana/            # Grafana starter dashboard (JSON)
+├── docs/                    # architecture, operations, gitops, observability
+│   └── images/             # screenshots (optional — add your own)
 └── .github/workflows/ci.yml # Read-only validation
 ```
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A[FastAPI app<br/>app/main.py] --> B[Docker image]
+    B --> C[Kubernetes base<br/>Deployment · Service · ConfigMap]
+    C --> D[Kustomize overlays<br/>dev · prod]
+    C --> E[Helm chart<br/>charts/kubebase-api]
+    E --> F[Argo CD GitOps<br/>dev synced · prod example]
+    A -. exposes .-> G[/metrics → Prometheus → Grafana/]
+```
+
+The app is built once and delivered through progressively higher-level tooling:
+raw Kubernetes manifests, then Kustomize overlays, then a Helm chart, then GitOps
+with Argo CD — with a Prometheus-style `/metrics` endpoint for observability. See
+[`docs/architecture.md`](docs/architecture.md) for the full breakdown.
 
 ## The app
 
@@ -229,6 +279,22 @@ docker rm -f kubebase-api-metrics-test   # removes only this test container
 
 See [`docs/observability.md`](docs/observability.md) for what `/metrics` exposes,
 how Prometheus/Grafana would use it, and the future `kube-prometheus-stack` path.
+
+## Screenshots
+
+> _Optional — these are placeholders. The project is fully usable without them;
+> screenshots can be added later by dropping PNGs into `docs/images/`._
+
+| View | Image |
+|---|---|
+| README / project overview | `docs/images/kubebase-readme-preview.png` |
+| GitHub Actions CI (green) | `docs/images/github-actions-ci.png` |
+| Argo CD dev app — Synced & Healthy | `docs/images/argocd-dev-healthy.png` |
+| `/metrics` endpoint output | `docs/images/metrics-endpoint.png` |
+
+<!-- Once added, embed them like:
+![Argo CD dev app Synced and Healthy](docs/images/argocd-dev-healthy.png)
+-->
 
 ## Roadmap
 
