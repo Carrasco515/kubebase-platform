@@ -16,6 +16,14 @@ spec:
       labels:
         app.kubernetes.io/name: kubebase-platform
         app.kubernetes.io/component: api
+      # Prometheus scrape hints (Phase 5 observability). These are plain
+      # annotations read by a Prometheus "kubernetes_sd" pod-scrape config; they
+      # require NO Prometheus Operator or CRDs, so they are safe even on a
+      # cluster with no monitoring installed (they are simply ignored then).
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8000"
     spec:
       containers:
         - name: api

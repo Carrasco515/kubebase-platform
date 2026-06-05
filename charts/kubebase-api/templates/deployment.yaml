@@ -14,6 +14,12 @@ spec:
       annotations:
         # Roll the pods automatically when the ConfigMap changes.
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if .Values.metrics.enabled }}
+        # Prometheus scrape hints — plain annotations, no Operator/CRDs needed.
+        prometheus.io/scrape: "true"
+        prometheus.io/path: {{ .Values.metrics.path | quote }}
+        prometheus.io/port: {{ .Values.metrics.port | quote }}
+        {{- end }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

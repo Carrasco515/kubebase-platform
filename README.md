@@ -82,6 +82,7 @@ A minimal FastAPI service with three endpoints:
 | `GET /`        | Welcome message + basic app info |
 | `GET /health`  | Health check (used by the liveness/readiness probes) |
 | `GET /config`  | Shows the non-secret configuration the app was started with |
+| `GET /metrics` | Prometheus-format metrics (Phase 5 observability) |
 
 Configuration (`APP_NAME`, `APP_ENV`, `APP_GREETING`, `LOG_LEVEL`) is read from
 environment variables, which in the cluster come from the **ConfigMap**.
@@ -209,6 +210,26 @@ done
 > Applying the Argo CD manifests requires Argo CD to be installed and is out of
 > scope for this phase. See `docs/gitops.md` before trying it.
 
+## Observability (Phase 5)
+
+The app exposes a **Prometheus-compatible `/metrics` endpoint** (request count,
+request latency, health-check count and `app_info`). The Kubernetes and Helm
+manifests add plain `prometheus.io/scrape` pod annotations so a Prometheus could
+discover and scrape the app later — **no Prometheus Operator or CRDs required**,
+and **nothing is installed** by this phase. A generic, safe Grafana starter
+dashboard lives in [`observability/grafana/`](observability/grafana/).
+
+```bash
+# Try it locally (Docker):
+docker build -t kubebase-api:observability .
+docker run --rm -d --name kubebase-api-metrics-test -p 8001:8000 kubebase-api:observability
+curl http://localhost:8001/metrics
+docker rm -f kubebase-api-metrics-test   # removes only this test container
+```
+
+See [`docs/observability.md`](docs/observability.md) for what `/metrics` exposes,
+how Prometheus/Grafana would use it, and the future `kube-prometheus-stack` path.
+
 ## Roadmap
 
 - [x] **Phase 1** — FastAPI demo app, Dockerfile, base Kubernetes manifests,
@@ -216,7 +237,10 @@ done
 - [x] **Phase 2** — Kustomize overlays for `dev` and `prod` environments
 - [x] **Phase 3** — Package the app as a **Helm chart** (`charts/kubebase-api`)
 - [x] **Phase 4** — **GitOps** examples (Argo CD Application manifests, `gitops/`)
-- [ ] **Phase 5** — Ingress + TLS, and monitoring (Prometheus / Grafana)
+- [x] **Phase 5** — **Observability**: Prometheus `/metrics` endpoint + scrape
+  metadata + Grafana docs (`docs/observability.md`)
+- [ ] **Phase 6** — Ingress + TLS, and a real monitoring stack
+  (`kube-prometheus-stack`)
 
 ## Documentation
 
@@ -225,6 +249,7 @@ done
 | [`docs/architecture.md`](docs/architecture.md) | App, image, namespace, Deployment, Service, ConfigMap, Secret, and the future Helm/GitOps path |
 | [`docs/operations.md`](docs/operations.md) | Day-to-day commands: build, apply, inspect pods, logs, and safe cleanup |
 | [`docs/gitops.md`](docs/gitops.md) | GitOps workflow with Argo CD: desired vs. live state, dev/prod Applications, safe testing, risks |
+| [`docs/observability.md`](docs/observability.md) | Observability (Phase 5): the `/metrics` endpoint, Prometheus scraping, Grafana, and the future monitoring path |
 | [`gitops/README.md`](gitops/README.md) | Overview of the GitOps examples in `gitops/` |
 
 ---

@@ -8,6 +8,12 @@ config:
   greeting: "Hello from KubeBase Platform — DEV (Helm)"
   logLevel: "debug"
 
+# Observability on for dev — the pod gets Prometheus scrape annotations.
+metrics:
+  enabled: true
+  path: /metrics
+  port: 8000
+
 resources:
   requests:
     cpu: 50m

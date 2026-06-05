@@ -20,6 +20,15 @@ service:
   type: ClusterIP
   port: 80
 
+# Observability (Phase 5). When enabled, the pod template gets plain Prometheus
+# scrape annotations (prometheus.io/scrape|path|port). These need NO Prometheus
+# Operator or CRDs — a cluster without monitoring simply ignores them. Enabled
+# by default for local learning. `port` should match `containerPort` above.
+metrics:
+  enabled: true
+  path: /metrics
+  port: 8000
+
 serviceAccount:
   # Create a dedicated ServiceAccount for the app.
   create: true

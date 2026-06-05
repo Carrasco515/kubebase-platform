@@ -213,6 +213,52 @@ pkill -f "port-forward -n kubebase-dev svc/kubebase-api-dev"
   (a directory apply would pull in the prod manifest too).
 - Never print the Argo CD admin password or any secret into logs or docs.
 
+## Observability — metrics (Phase 5)
+
+The app exposes Prometheus-format metrics at `/metrics`. Full background is in
+[`observability.md`](observability.md). Nothing here installs Prometheus or
+Grafana.
+
+### curl /metrics locally
+
+```bash
+# App running locally (uvicorn or the Docker image on :8001):
+curl http://localhost:8000/metrics      # uvicorn (port 8000)
+# or, with the Docker image mapped to :8001:
+curl http://localhost:8001/metrics
+```
+
+### curl /metrics in Kubernetes (via port-forward)
+
+```bash
+# Forward the Service, then read /metrics through it:
+kubectl port-forward -n kubebase-dev svc/kubebase-api 8080:80   # Kustomize service
+# (Helm release service is svc/kubebase-api-dev — adjust accordingly)
+curl http://localhost:8080/metrics
+```
+
+### Check the Prometheus scrape annotations on the pods
+
+```bash
+kubectl get pod -n kubebase-dev \
+  -l app.kubernetes.io/name=kubebase-platform \
+  -o jsonpath='{range .items[*]}{.metadata.name}{"  scrape="}{.metadata.annotations.prometheus\.io/scrape}{"  path="}{.metadata.annotations.prometheus\.io/path}{"  port="}{.metadata.annotations.prometheus\.io/port}{"\n"}{end}'
+```
+
+> These are plain annotations — they need **no** Prometheus Operator or CRDs. A
+> cluster without monitoring simply ignores them. Do **not** install Prometheus
+> or Grafana as part of this phase.
+
+### Avoid applying prod (reminder)
+
+Metrics are enabled in the (local learning) prod profile too, but prod is still
+example-only:
+
+- Render-only unless you deliberately test it:
+  `helm template kubebase-api charts/kubebase-api -f charts/kubebase-api/values-prod.yaml`.
+- Do **not** apply `kubernetes/overlays/prod`, the prod Helm profile, or
+  `gitops/argocd/kubebase-api-prod.yaml` unless you explicitly intend to.
+
 ## Check pods and resources
 
 ```bash

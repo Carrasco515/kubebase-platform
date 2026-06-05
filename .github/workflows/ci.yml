@@ -81,6 +81,49 @@ jobs:
             -f charts/kubebase-api/values-prod.yaml >/dev/null
           echo "OK: helm template rendered (prod profile)"
 
+      - name: Validate observability wiring (metrics)
+        run: |
+          # Phase 5: confirm the /metrics endpoint and the metrics dependency are
+          # present, and that the pods carry Prometheus scrape annotations.
+          # Read-only checks — nothing is deployed or scraped.
+          rc=0
+
+          if grep -Eq '@app\.get\("/metrics"\)' app/main.py; then
+            echo "OK: /metrics route found in app/main.py"
+          else
+            echo "MISSING: /metrics route not found in app/main.py" >&2; rc=1
+          fi
+
+          if grep -Eiq 'prometheus[-_]client' app/requirements.txt; then
+            echo "OK: prometheus-client present in app/requirements.txt"
+          else
+            echo "MISSING: prometheus-client not in app/requirements.txt" >&2; rc=1
+          fi
+
+          if kubectl kustomize kubernetes/base | grep -q 'prometheus.io/scrape'; then
+            echo "OK: prometheus.io/scrape annotation rendered by kustomize base"
+          else
+            echo "MISSING: prometheus.io/scrape annotation not rendered" >&2; rc=1
+          fi
+
+          if helm template kubebase-api charts/kubebase-api | grep -q 'prometheus.io/scrape'; then
+            echo "OK: prometheus.io/scrape annotation rendered by Helm (default)"
+          else
+            echo "MISSING: Helm did not render prometheus.io/scrape" >&2; rc=1
+          fi
+
+          exit "$rc"
+
+      - name: Validate Grafana dashboard JSON (if present)
+        run: |
+          f=observability/grafana/kubebase-api-dashboard.json
+          if [ -f "$f" ]; then
+            python -m json.tool "$f" >/dev/null \
+              && echo "OK: $f is valid JSON"
+          else
+            echo "No Grafana dashboard file at $f — skipping (allowed)."
+          fi
+
       - name: Validate GitOps Argo CD manifests (presence + structure)
         run: |
           # We cannot fully validate kind: Application without the Argo CD CRDs,

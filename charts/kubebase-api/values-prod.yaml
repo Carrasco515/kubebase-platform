@@ -9,6 +9,14 @@ config:
   greeting: "Hello from KubeBase Platform — PROD (Helm, local learning environment)"
   logLevel: "info"
 
+# Observability on for the (local learning) prod profile too. This is NOT a real
+# production cluster — it just shows that the prod profile is scrape-ready in the
+# same way as dev.
+metrics:
+  enabled: true
+  path: /metrics
+  port: 8000
+
 # Slightly stricter than dev. Still modest enough for local Minikube.
 resources:
   requests:

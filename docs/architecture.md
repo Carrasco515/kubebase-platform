@@ -23,11 +23,12 @@ Source code (FastAPI)  ->  Container image (Dockerfile)  ->  Kubernetes (Kustomi
 
 ### App
 
-A minimal **FastAPI** service (`app/main.py`) with three endpoints: `/` (info),
-`/health` (probe target) and `/config` (the non-secret configuration it sees). It
-reads `APP_NAME`, `APP_ENV`, `APP_GREETING` and `LOG_LEVEL` from environment
-variables, with safe defaults so it also runs without any configuration. It never
-reads or returns secret values.
+A minimal **FastAPI** service (`app/main.py`) with four endpoints: `/` (info),
+`/health` (probe target), `/config` (the non-secret configuration it sees) and
+`/metrics` (Prometheus-format metrics — see Observability below). It reads
+`APP_NAME`, `APP_ENV`, `APP_GREETING` and `LOG_LEVEL` from environment variables,
+with safe defaults so it also runs without any configuration. It never reads or
+returns secret values.
 
 ### Container image
 
@@ -83,6 +84,22 @@ the kustomization yourself. Real secrets must never be committed.
 together, pins the `kubebase-dev` namespace and adds a common `part-of` label.
 `kubectl kustomize kubernetes/base` renders the full set of manifests; CI runs
 exactly this to validate them.
+
+### Observability (Phase 5)
+
+The app exposes a Prometheus-compatible **`/metrics`** endpoint (request count,
+request duration, health-check count and `app_info`). The Kubernetes base and the
+Helm chart add plain `prometheus.io/scrape` pod annotations so that:
+
+- **Prometheus** can later discover and scrape the app's metrics — with **no**
+  Prometheus Operator or CRDs required (the annotations are ignored on a cluster
+  without monitoring).
+- **Grafana** can later visualise those metrics via PromQL (a generic starter
+  dashboard lives in [`observability/grafana/`](../observability/grafana/)).
+
+This is the **Phase 5 observability layer**: the app and manifests are made
+*monitoring-ready*, but no Prometheus or Grafana is installed by default. See
+[`observability.md`](observability.md) for details.
 
 ## CI
 
