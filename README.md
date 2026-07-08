@@ -299,19 +299,19 @@ how Prometheus/Grafana would use it, and the future `kube-prometheus-stack` path
 
 ## Screenshots
 
-> _Optional — these are placeholders. The project is fully usable without them;
-> screenshots can be added later by dropping PNGs into `docs/images/`._
+Real command output, captured from this repository (rendered as terminal-style
+SVGs — see [`docs/screenshots.md`](docs/screenshots.md) for how they are made
+and which captures are still pending).
 
-| View | Image |
-|---|---|
-| README / project overview | `docs/images/kubebase-readme-preview.png` |
-| GitHub Actions CI (green) | `docs/images/github-actions-ci.png` |
-| Argo CD dev app — Synced & Healthy | `docs/images/argocd-dev-healthy.png` |
-| `/metrics` endpoint output | `docs/images/metrics-endpoint.png` |
+![pytest results — 4 passed](docs/images/pytest-results.svg)
 
-<!-- Once added, embed them like:
-![Argo CD dev app Synced and Healthy](docs/images/argocd-dev-healthy.png)
--->
+![kubectl kustomize build — base, dev and prod overlays render cleanly](docs/images/kubernetes-kustomize-build.svg)
+
+![helm lint — kubebase-api chart passes](docs/images/helm-lint.svg)
+
+![health endpoint — live curl against the running container](docs/images/health-endpoint.svg)
+
+![metrics endpoint — Prometheus exposition format](docs/images/metrics-endpoint.svg)
 
 ## Roadmap
 
