@@ -28,6 +28,11 @@ jobs:
           python -m py_compile app/main.py
           echo "OK: app/main.py compiles without syntax errors"
 
+      - name: Run API smoke tests (pytest)
+        run: |
+          pip install -r app/requirements-dev.txt
+          cd app && python -m pytest -q
+
       - name: Check required files exist
         run: |
           missing=0

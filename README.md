@@ -1,5 +1,11 @@
 # KubeBase Platform
 
+[![CI](https://github.com/Carrasco515/kubebase-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Carrasco515/kubebase-platform/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-Kustomize%20%2B%20Helm-326CE5?logo=kubernetes&logoColor=white)
+![Argo CD](https://img.shields.io/badge/GitOps-Argo%20CD-EF7B4D?logo=argo&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > A DevOps **learning and portfolio project** — a local Kubernetes platform lab.
 > It runs a small FastAPI demo app on Kubernetes with clean, beginner-friendly
 > manifests, Kustomize and GitHub Actions CI.
@@ -39,8 +45,11 @@ health probes, resource limits and a clean manifest layout I can grow over time.
   `values-prod.yaml` profiles.
 - **GitOps with Argo CD** — `Application` manifests; the dev Application was
   reconciled locally to **Synced & Healthy** (prod left as example-only).
-- **CI validation** — read-only GitHub Actions: Python compile, Kustomize build,
-  Helm lint/template, GitOps + observability checks. No deployment, no cluster.
+- **Testing** — pytest smoke tests for every endpoint (`app/test_main.py`),
+  run automatically in CI.
+- **CI validation** — read-only GitHub Actions: Python compile, pytest,
+  Kustomize build, Helm lint/template, GitOps + observability checks.
+  No deployment, no cluster.
 - **Observability** — a Prometheus-style `/metrics` endpoint, pod scrape
   annotations and a Grafana starter dashboard.
 - **Operations documentation** — runbook-style docs for build, deploy, inspect
@@ -79,7 +88,8 @@ I'm building the **Kubernetes and Platform Engineering** skills on top of that.
 kubebase-platform/
 ├── app/                     # FastAPI demo application
 │   ├── main.py
-│   └── requirements.txt
+│   ├── test_main.py         # pytest smoke tests (run in CI)
+│   └── requirements.txt     # + requirements-dev.txt for tests
 ├── Dockerfile               # Container image for the app
 ├── kubernetes/
 │   ├── base/                # Kustomize base manifests
@@ -145,6 +155,13 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 # then open http://localhost:8000/ , /health , /config
+```
+
+Run the tests (same as CI):
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q
 ```
 
 ## Build the Docker image
@@ -321,4 +338,4 @@ how Prometheus/Grafana would use it, and the future `kube-prometheus-stack` path
 ---
 
 *KubeBase Platform is a personal learning project. It runs locally by default and
-is not intended for production use as-is.*
+is not intended for production use as-is. Licensed under the [MIT License](LICENSE).*
